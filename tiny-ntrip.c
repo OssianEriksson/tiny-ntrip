@@ -9,6 +9,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+const char usage[] = ""
+#include "usage.txt"
+;
+
 #define min(a, b) \
   ({ \
     __typeof__ (a) _a = (a); \
@@ -26,6 +30,7 @@ struct Args {
   const char *mount;
   bool verbose;
   int interval;
+  bool help;
 };
 
 struct FD {
@@ -52,13 +57,13 @@ static struct Args parse_args(int argc, const char **argv) {
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "--verbose") == 0) {
       args.verbose = true;
+    } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+      args.help = true;
+      args.error = true;
     } else if (i + 1 >= argc) {
       fprintf(stderr, "Too few arguments for option: %s\n", argv[i]);
       args.error = 1;
-      break;
-    }
-
-    if (strcmp(argv[i], "--server") == 0) {
+    } else if (strcmp(argv[i], "--server") == 0) {
       args.server = argv[++i];
     } else if (strcmp(argv[i], "--port") == 0) {
       args.port = (int)strtol(argv[++i], NULL, 10);
@@ -80,24 +85,28 @@ static struct Args parse_args(int argc, const char **argv) {
         fprintf(stderr, "Invalid interval: %s\n", argv[i]);
         args.error = 1;
       }
+    } else {
+      fprintf(stderr, "Unknown option: %s\n", argv[i]);
     }
   }
 
-  if (args.server == NULL) {
-    fprintf(stderr, "Missing required option: server\n");
-    args.error = 1;
-  }
-  if (args.port <= 0) {
-    fprintf(stderr, "Missing required option: port\n");
-    args.error = 1;
-  }
-  if ((args.password == NULL) != (args.user == NULL)) {
-    fprintf(stderr, "A username and password must both be specified\n");
-    args.error = 1;
-  }
-  if (args.mount == NULL) {
-    fprintf(stderr, "Missing required option: mount\n");
-    args.error = 1;
+  if (!args.help) {
+    if (args.server == NULL) {
+      fprintf(stderr, "Missing required option: server\n");
+      args.error = 1;
+    }
+    if (args.port <= 0) {
+      fprintf(stderr, "Missing required option: port\n");
+      args.error = 1;
+    }
+    if ((args.password == NULL) != (args.user == NULL)) {
+      fprintf(stderr, "A username and password must both be specified\n");
+      args.error = 1;
+    }
+    if (args.mount == NULL) {
+      fprintf(stderr, "Missing required option: mount\n");
+      args.error = 1;
+    }
   }
 
   return args;
@@ -271,6 +280,10 @@ static int write_all(const struct FD *fd, const char *charv, size_t charc) {
 
 int main(int argc, const char **argv) {
   const struct Args args = parse_args(argc, argv);
+  if (args.help) {
+    printf("%s\n", usage);
+    return 0;
+  }
   if (args.error) {
     return 1;
   }
