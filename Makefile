@@ -1,23 +1,27 @@
-CC = gcc
-override CFLAGS += -O3 -Wall
+CC     := gcc
+CFLAGS := -O3
 
-PROGRAM := tiny-ntrip
+override CFLAGS += -Wall
+
+PROGRAM   := tiny-ntrip
 BUILD_DIR := build
-SOURCES := $(shell find . -name '*.c')
-OBJECTS := $(SOURCES:./%.c=$(BUILD_DIR)/%.o)
-HEADERS := $(shell find . -name '*.h')
+SOURCES   := $(shell find . -name '*.c')
+OBJECTS   := $(SOURCES:./%.c=$(BUILD_DIR)/%.o)
+HEADERS   := $(shell find . -name '*.h')
+USAGE     := $(BUILD_DIR)/usage.txt
 
 all: $(PROGRAM)
 
-usage.txt: README.md
+$(USAGE): README.md
+	@mkdir -p $(@D)
 	@cat README.md \
 		| grep -zPo '(?<=!-- usage-marker -->\n```\n)(.|\n)*?(?=\n```)' \
-		| sed -e 's/\x0//g' -e 's/"/\\"/g' -e 's/\(.*\)/"\1\\n"/' > usage.txt
+		| sed -e 's/\x0//g' -e 's/"/\\"/g' -e 's/\(.*\)/"\1\\n"/' > $(USAGE)
 
 $(PROGRAM): $(OBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-$(BUILD_DIR)/%.o: %.c usage.txt $(HEADERS)
+$(BUILD_DIR)/%.o: %.c $(USAGE) $(HEADERS)
 	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
@@ -25,5 +29,4 @@ $(BUILD_DIR)/%.o: %.c usage.txt $(HEADERS)
 clean:
 	rm -f $(PROGRAM)
 	rm -Rf $(BUILD_DIR)
-	rm -f usage.txt
 	touch $(SOURCES)

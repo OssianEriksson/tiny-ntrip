@@ -9,8 +9,12 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-const char usage[] = ""
-#include "usage.txt"
+const char help[] = ""
+#if __has_include("build/usage.txt")
+#include "build/usage.txt"
+#else
+#warning Build using make to generate correct help text
+#endif
 ;
 
 #define min(a, b) \
@@ -281,7 +285,7 @@ static int write_all(const struct FD *fd, const char *charv, size_t charc) {
 int main(int argc, const char **argv) {
   const struct Args args = parse_args(argc, argv);
   if (args.help) {
-    printf("%s\n", usage);
+    printf("%s\n", help);
     return 0;
   }
   if (args.error) {

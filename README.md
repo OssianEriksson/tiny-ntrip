@@ -34,4 +34,4 @@ To supply additional compiler flags run
 ```bash
 make CFLAGS=<my-flags>
 ```
-this may be useful for example when compiling for integrated systems like routers where the `-static` flag may need to be supplied.
+this may be useful for example when compiling for integrated systems like routers where the `-static -O3` flags might be supplied.
