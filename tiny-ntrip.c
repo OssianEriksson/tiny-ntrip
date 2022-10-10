@@ -25,6 +25,7 @@ struct Args {
   const char *password;
   const char *mount;
   bool verbose;
+  int interval;
 };
 
 struct FD {
@@ -45,42 +46,39 @@ struct ReadResult {
 
 static struct Args parse_args(int argc, const char **argv) {
   struct Args args = {
-    .error = false,
-    .server = NULL,
-    .port = -1,
-    .device = NULL,
-    .user = NULL,
-    .password = NULL,
-    .mount = NULL,
-    .verbose = false
+    .interval = 10
   };
 
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "--verbose") == 0) {
       args.verbose = true;
-    } else {
-      if (i + 1 >= argc) {
-        fprintf(stderr, "Too few arguments for option: %s\n", argv[i]);
-        args.error = 1;
-        break;
-      }
+    } else if (i + 1 >= argc) {
+      fprintf(stderr, "Too few arguments for option: %s\n", argv[i]);
+      args.error = 1;
+      break;
+    }
 
-      if (strcmp(argv[i], "--server") == 0) {
-        args.server = argv[++i];
-      } else if (strcmp(argv[i], "--port") == 0) {
-        args.port = (int)strtol(argv[++i], NULL, 10);
-        if (args.port <= 0) {
-          fprintf(stderr, "Invalid port: %s\n", argv[i]);
-          args.error = 1;
-        }
-      } else if (strcmp(argv[i], "--device") == 0) {
-        args.device = argv[++i];
-      } else if (strcmp(argv[i], "--user") == 0) {
-        args.user = argv[++i];
-      } else if (strcmp(argv[i], "--password") == 0) {
-        args.password = argv[++i];
-      } else if (strcmp(argv[i], "--mount") == 0) {
-        args.mount = argv[++i];
+    if (strcmp(argv[i], "--server") == 0) {
+      args.server = argv[++i];
+    } else if (strcmp(argv[i], "--port") == 0) {
+      args.port = (int)strtol(argv[++i], NULL, 10);
+      if (args.port <= 0) {
+        fprintf(stderr, "Invalid port: %s\n", argv[i]);
+        args.error = 1;
+      }
+    } else if (strcmp(argv[i], "--device") == 0) {
+      args.device = argv[++i];
+    } else if (strcmp(argv[i], "--user") == 0) {
+      args.user = argv[++i];
+    } else if (strcmp(argv[i], "--password") == 0) {
+      args.password = argv[++i];
+    } else if (strcmp(argv[i], "--mount") == 0) {
+      args.mount = argv[++i];
+    } else if (strcmp(argv[i], "--interval") == 0) {
+      args.interval = (int)strtol(argv[++i], NULL, 10);
+      if (args.interval <= 0) {
+        fprintf(stderr, "Invalid interval: %s\n", argv[i]);
+        args.error = 1;
       }
     }
   }
@@ -89,7 +87,7 @@ static struct Args parse_args(int argc, const char **argv) {
     fprintf(stderr, "Missing required option: server\n");
     args.error = 1;
   }
-  if (args.port < 0) {
+  if (args.port <= 0) {
     fprintf(stderr, "Missing required option: port\n");
     args.error = 1;
   }
@@ -320,7 +318,7 @@ int main(int argc, const char **argv) {
 
   while (true) {    
     if (args.verbose) {
-      printf("Connection to %s:%d\n", args.server, args.port);
+      printf("Connecting to %s:%d\n", args.server, args.port);
     }
 
     struct FD sockfd = { .fd = socket(AF_INET, SOCK_STREAM, 0) };
@@ -488,11 +486,16 @@ int main(int argc, const char **argv) {
         }
       }
 
-      const unsigned int delay = 5;
-      if (args.verbose) {
-        printf("Sleeping for %u seconds\n\n", delay);
+      if (args.interval >= 0) {
+        if (args.verbose) {
+          printf("Sleeping for %d seconds\n", args.interval);
+        }
+        sleep(args.interval);
       }
-      sleep(delay);
+
+      if (args.verbose) {
+        printf("\n");
+      }
     }
 
     retry:
@@ -502,7 +505,7 @@ int main(int argc, const char **argv) {
     }
 
     const unsigned int delay = 10;
-    printf("Retrying in %u seconds...\n\n", delay);
+    fprintf(stderr, "Retrying in %u seconds...\n\n", delay);
     sleep(delay);
   }
 
