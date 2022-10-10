@@ -394,7 +394,8 @@ int main(int argc, const char **argv) {
           printf("Reading position data from device\n");
         }
 
-        size_t position_sentences = 0;
+        bool found_nmea_string = false;
+        char nmea[200];
         while (true) {
           const enum ReadStatus read_status = read_line(&devicefd, buf, sizeof(buf), false).status;
           if (read_status == READ_OVERFLOW) {
@@ -405,21 +406,23 @@ int main(int argc, const char **argv) {
           }
 
           if (strlen(buf) >= 7 && buf[0] == '$' && strncmp(&buf[3], "GGA,", 4) == 0) {
-            char nmea[200];
             if (snprintf(nmea, sizeof(nmea), "%s\r\n", buf) < 0) {
               fprintf(stderr, "NMEA string from device too long\n");
               continue;
             }
-
-            if (write_all(&sockfd, nmea, strlen(nmea)) < 0) {
-              goto retry;
-            }
-            position_sentences++;
+            found_nmea_string = true;
           }
         }
 
-        if (args.verbose) {
-          printf("Read and sent %u $--GGA nmea sentences to server\n", (unsigned int)position_sentences);
+        if (found_nmea_string) {
+          if (args.verbose) {
+            printf("Sending position data to server\n");
+          }
+          if (write_all(&sockfd, nmea, strlen(nmea)) < 0) {
+            goto retry;
+          }
+        } else if (args.verbose) {
+          printf("No new position data found\n");
         }
       }
 
@@ -487,7 +490,7 @@ int main(int argc, const char **argv) {
 
       const unsigned int delay = 5;
       if (args.verbose) {
-        printf("Sleeping for %u seconds\n", delay);
+        printf("Sleeping for %u seconds\n\n", delay);
       }
       sleep(delay);
     }
@@ -499,7 +502,7 @@ int main(int argc, const char **argv) {
     }
 
     const unsigned int delay = 10;
-    printf("Retrying in %u seconds...\n", delay);
+    printf("Retrying in %u seconds...\n\n", delay);
     sleep(delay);
   }
 
