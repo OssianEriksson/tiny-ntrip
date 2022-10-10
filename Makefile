@@ -1,11 +1,11 @@
 CC = gcc
-CFLAGS = -O3 -Wall
+override CFLAGS += -O3 -Wall
 
-PROGRAM = tiny-ntrip
-BUILD_DIR = build
-SOURCES = $(shell find . -name '*.c')
+PROGRAM := tiny-ntrip
+BUILD_DIR := build
+SOURCES := $(shell find . -name '*.c')
 OBJECTS := $(SOURCES:./%.c=$(BUILD_DIR)/%.o)
-HEADERS = $(shell find . -name '*.h')
+HEADERS := $(shell find . -name '*.h')
 
 all: $(PROGRAM)
 
