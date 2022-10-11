@@ -327,11 +327,22 @@ int main(int argc, const char **argv) {
     return 2;
   }
 
-  struct FD devicefd = { .fd = args.device ? open(args.device, O_RDWR) : -1 };
-  if (args.device && devicefd.fd < 0) {
-    perror("open");
-    return 3;
+  int devfd = -1;
+  if (args.device) {
+    while (true) {
+      devfd = open(args.device, O_RDWR);
+      if (devfd >= 0) {
+        break;
+      }
+
+      printf("Unable to open device: %s\n", args.device);
+      
+      const unsigned int delay = 2;
+      fprintf(stderr, "Retrying in %u seconds...\n\n", delay);
+      sleep(delay);
+    }
   }
+  struct FD devicefd = { .fd = devfd };
 
   while (true) {    
     if (args.verbose) {
