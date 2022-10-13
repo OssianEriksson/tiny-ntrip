@@ -490,7 +490,7 @@ int main(int argc, const char **argv) {
           }
         }
 
-        chunked_read_complete:
+        chunked_read_complete:;
       } else {
         size_t bytes_read = 0;
         while (true) {
