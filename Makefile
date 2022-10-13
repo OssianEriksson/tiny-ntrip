@@ -19,7 +19,7 @@ $(USAGE): README.md
 		| sed -e 's/\x0//g' -e 's/"/\\"/g' -e 's/\(.*\)/"\1\\n"/' > $(USAGE)
 
 $(PROGRAM): $(OBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: %.c $(USAGE) $(HEADERS)
 	@mkdir -p $(@D)

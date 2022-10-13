@@ -32,6 +32,6 @@ make CC=<my-compiler>
 
 To supply additional compiler flags run
 ```bash
-make CFLAGS=<my-flags>
+make CFLAGS=<my-compiler-flags> LDFLAGS=<my-linker-flags>
 ```
-this may be useful for example when compiling for integrated systems like routers where the `-static -O3` flags might be supplied.
+this may be useful for example when compiling for integrated systems like routers where the `LDFLAGS=-static` may be supplied.
